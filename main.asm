@@ -1,113 +1,128 @@
 org 0x7C00
 
 start:
-    call read           ; Llama a la rutina para leer la matriz desde el disco
-    call draw_square    ; Llama a la rutina para dibujar el cuadrado
+    ; --- Inicialización ---
+    xor ax, ax
+    mov ds, ax          ; DS = 0 para acceder a nuestras variables
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x7C00
 
-    jmp $               ; Bucle infinito para detener la ejecución
+    ; --- Modo Video 13h ---
+    mov ax, 0x0013
+    int 0x10
 
-read:
-    ; Configurar el modo de video 13h (320x200, 256 colores)
-    mov ax, 0x0013       ; Modo de video 13h
-    int 0x10             ; Llamar a la BIOS para cambiar el modo de video
+    ; --- Cargar mapa (125 sectores) ---
+    mov ax, 0x8000
+    mov es, ax          ; ES temporalmente a 0x8000 para carga
+    xor bx, bx
+    mov ah, 0x02
+    mov al, 125
+    mov ch, 0
+    mov dh, 0
+    mov cl, 2
+    int 0x13
+    jc disk_error
 
-    ; Configurar el segmento de video
-    mov ax, 0xA000       ; Segmento de memoria de video
-    mov es, ax           ; ES apunta a la memoria de video
+    ; --- Dibujar mapa ---
+    call draw_map
 
-    ; Configurar los parámetros para leer sectores
-    xor bx, bx           ; Offset en la memoria de video (bx = 0)
-    mov dl, 0x00         ; Unidad de disco (0x00 = disco virtual en QEMU)
-    mov dh, 0            ; Cabeza 0
-    mov ch, 0            ; Cilindro 0
-    mov cl, 2            ; Sector inicial (sector 2, después del sector de arranque)
-
-    mov si, 126          ; Número de sectores a leer
-    mov di, 0            ; Contador de sectores leídos en la cabeza actual
-
-read_sector:
-    ;push si              ; Guardar el contador de sectores
-    mov ah, 0x02         ; Función 02h: Leer sectores
-    mov al, 1            ; Leer 1 sector
-    mov bx, bx           ; Offset en la memoria de video
-    mov dl, 0x00         ; Unidad de disco
-    int 0x13             ; Llamar a la BIOS para leer el sector
-    jc error             ; Si hay un error, saltar a "error"
-
-    add bx, 512          ; Avanzar 512 bytes en la memoria de video
-    inc cl               ; Avanzar al siguiente sector
-    inc di               ; Incrementar el contador de sectores leídos
-
-    ; Comprobar si hemos leído 30 sectores en esta cabeza
-    cmp di, 35
-    je change_head       ; Si hemos leído 30 sectores, cambiar de cabeza
-
-    ;pop si               ; Restaurar el contador de sectores
-    dec si               ; Decrementar el contador
-    jnz read_sector      ; Repetir hasta que se lean todos los sectores
-
-read_done:
-    ret                  ; Asegurar retorno correcto
-
-change_head:
-    inc dh               ; Cambiar de cabeza (0 -> 1, 1 -> 2)
-
-    cmp dh, 2            ; Si pasamos la cabeza 1, es hora de cambiar de cilindro
-    jne reset_sector     ; Si no hemos pasado de la cabeza 1, solo reiniciar sector
-
-    ; Cambio de cilindro
-    inc ch               ; Cambiar al siguiente cilindro
-    xor dh, dh           ; Reiniciar la cabeza a 0
-
-reset_sector:
-    xor di, di           ; Resetear el contador de sectores leídos
-    mov cl, 2            ; Volver al sector 2 en la nueva cabeza/cilindro
-    jmp read_sector      ; Volver a leer desde el sector 2
-
-error:
-    mov ax, 0x4C00       ; Función para salir de DOS con código de salida 0
-    int 0x21             ; Llamada a la interrupción 21h de DOS (salida)
-
-draw_square:
-    ; Asegurar que ES apunte a la memoria de video
-    ;xor ax, ax
+    ; --- Configurar ES para memoria de video ---
     mov ax, 0xA000
     mov es, ax
 
-    ; Calcular la posición en la memoria de video
-    mov ax, [sq_y]      ; Y
-    mov bx, 320         ; Ancho de la pantalla
-    mul bx              ; ax = Y * 320
-    add ax, [sq_x]      ; ax = Y * 320 + X
-    mov di, ax          ; Guardar en DI (posición inicial)
+    ; --- Dibujar cuadrado ---
+    mov word [sq_x], 47
+    mov word [sq_y], 100
+    mov byte [sq_color], 0x01 ; Azul
+    call draw_square
 
-    ; Dibujar el cuadrado
-    xor dx, dx          ; Contador de filas
-draw_row:
-    xor cx, cx          ; Contador de columnas
-draw_pixel:
-    mov byte [es:di], COLOR_WHITE ; Escribir color
-    inc di              ; Siguiente píxel
-    inc cx
-    cmp cx, [sq_width]  ; ¿Terminamos la fila?
-    jl draw_pixel
+    mov word [sq_x], 55
+    mov word [sq_y], 100
+    mov byte [sq_color], 0x04  ; rojo
+    call draw_square 
 
-    add di, 320         ; Saltar a la siguiente línea
-    sub di, [sq_width]  ; Asegurar alineación
-    inc dx
-    cmp dx, [sq_height] ; ¿Terminamos el cuadrado?
-    jl draw_row
+    ; --- Bucle infinito ---
+    jmp $
 
+draw_map:
+    push ds             ; Guardar DS original
+    push es
+    
+    mov ax, 0xA000
+    mov es, ax          ; ES = segmento de video
+    mov ax, 0x8000
+    mov ds, ax          ; DS = segmento de datos cargados
+    xor si, si
+    xor di, di
+    mov cx, 32000
+    rep movsw
+    
+    pop es              ; Restaurar ES
+    pop ds              ; Restaurar DS
     ret
 
-; Datos
+draw_square:
+    ; Asegurar que DS apunte a nuestro segmento de datos
+    push ds
+    xor ax, ax
+    mov ds, ax
+    
+    ; Calcular posición en memoria de video
+    mov ax, [sq_y]      ; Y (accede via DS)
+    mov bx, 320         ; Ancho de pantalla
+    mul bx              ; ax = Y * 320
+    add ax, [sq_x]      ; ax = Y * 320 + X (accede via DS)
+    mov di, ax          ; DI = posición inicial
+    
+    ; Dibujar el cuadrado
+    xor dx, dx          ; Contador de filas
+
+draw_row:
+    xor cx, cx          ; Contador de columnas
+    
+draw_pixel:
+    mov al, [sq_color]  ; Cargar color (accede via DS)
+    mov byte [es:di], al ; Establecer color
+    inc di              ; Siguiente píxel
+    inc cx
+    cmp cx, [sq_width]  ; ¿Terminamos la fila? (accede via DS)
+    jl draw_pixel
+
+    add di, 320         ; Saltar a siguiente línea
+    sub di, [sq_width]  ; Ajustar posición (accede via DS)
+    inc dx
+    cmp dx, [sq_height] ; ¿Terminamos? (accede via DS)
+    jl draw_row
+    
+    pop ds              ; Restaurar DS
+    ret
+
+; --- Variables ---
 sq_x dw 100             ; Coordenada X
 sq_y dw 50              ; Coordenada Y
-sq_width dw 40          ; Ancho
-sq_height dw 70         ; Alto
-COLOR_WHITE equ 0x0F    ; Blanco (valor 15)
+sq_width dw 4          ; Ancho
+sq_height dw 4         ; Alto
+sq_color dw 0x01
+blue_car_d dd 0
 
-; Rellenar hasta 510 bytes
+; --- Manejo de errores ---
+disk_error:
+    mov si, error_msg
+    call print_string
+    jmp $
+
+print_string:
+    lodsb
+    or al, al
+    jz .done
+    mov ah, 0x0E
+    int 0x10
+    jmp print_string
+.done:
+    ret
+
+error_msg db "Error de disco!", 0
+
 times 510 - ($ - $$) db 0
 dw 0xAA55
-
