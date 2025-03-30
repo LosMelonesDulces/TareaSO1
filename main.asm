@@ -57,6 +57,17 @@
     ; --- Inicializar variable de turno ---
     mov byte [turn], 0
 
+assign_speed:
+    ; velocidad azul
+    call get_random
+    mov [0x7DFA], al
+    ; velocidad rojo
+    call get_random
+    mov [0x7DFB], al
+    ; velocidad verde
+    call get_random
+    mov [0x7DFC], al
+
     ; --- Bucle principal SIN temporizador ---
     main_loop:
         mov al, [0x7DFE]
@@ -83,8 +94,8 @@
         ; Delay usando BIOS (funciona bien en QEMU)
         mov ah, 0x86
         mov cx, 0x0000 ; Parte alta del delay (microsegundos)
-        ;mov dx, 0x61A8          ; Parte baja (0x0000 = ~65536 µs)
-        mov dx, 0x2710        
+        mov dx, 0x61A8          ; Parte baja (0x0000 = ~65536 µs)
+        ;mov dx, 0x2710         ; Parte baja (0x0000 = ~65536 µs)
         int 0x15
         
         jmp main_loop
@@ -119,6 +130,31 @@
         jmp print_string
     .done:
         ret
+
+    generate_random:
+        ; Usar el contador de ticks como semilla
+        mov ah, 0x00
+        int 0x1A        ; DX = ticks desde medianoche
+        
+        ; Algoritmo simple para mejorar aleatoriedad
+        mov ax, dx
+        mov bx, 0x8405
+        mul bx          ; AX = AX * BX
+        add ax, 0x1234  ; Sumar constante
+        xor ax, [n_tropy]
+        inc byte [n_tropy]
+        xor dx, dx
+        ret
+    
+    get_random:
+        call generate_random
+        mov bx, 5
+        div bx
+        mov al, dl
+        inc al
+        ret
+
+    n_tropy db 0
 
     ; --- Datos ---
     error_msg db "Error de disco!", 0

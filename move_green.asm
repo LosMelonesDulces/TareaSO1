@@ -2,10 +2,6 @@
 [bits 16]
 
 start:
-    ; Verificar turno
-    mov al, [0x7DFE]
-    cmp al, 2
-    ;je .skip_turn
 
     ; --- Configurar segmento de video ---
     mov ax, 0xA000
@@ -18,6 +14,9 @@ start:
     mov [sq_y], ax
     mov byte [sq_color], 0x00
     call draw_square
+
+    mov al, [0x7DFC]
+    mov cl, al
 
     ; --- Mover según checkpoint actual ---
     cmp byte [current_chekpoint_green], 0
@@ -42,71 +41,71 @@ start:
     je .chek_point9
 
 .chek_point0: ; arriba
-    dec word [y_green]
-    cmp word [y_green], 55
+    sub [y_green], cl
+    cmp word [y_green], 60
     jg .draw
     mov byte [current_chekpoint_green], 1
     jmp .draw
 
 .chek_point1: ; derecha
-    inc word [x_green]
-    cmp word [x_green], 130
+    add [x_green], cl
+    cmp word [x_green], 125
     jl .draw
     mov byte [current_chekpoint_green], 2
     jmp .draw
 
 .chek_point2: ; arriba
-    dec word [y_green]
-    cmp word [y_green], 25
+    sub [y_green], cl
+    cmp word [y_green], 30
     jg .draw
     mov byte [current_chekpoint_green], 3
     jmp .draw
 
 .chek_point3: ; derecha
-    inc word [x_green]
-    cmp word [x_green], 195
+    add [x_green], cl
+    cmp word [x_green], 200
     jl .draw
     mov byte [current_chekpoint_green], 4
     jmp .draw
 
 .chek_point4: ; abajo
-    inc word [y_green]
-    cmp word [y_green], 90
+    add [y_green], cl
+    cmp word [y_green], 100
     jl .draw
     mov byte [current_chekpoint_green], 5
     jmp .draw
 
 .chek_point5: ; derecha
-    inc word [x_green]
-    cmp word [x_green], 280
+    add [x_green], cl
+    cmp word [x_green], 252 ; si este valor es mayor a 253 ocurre un bug
     jl .draw
     mov byte [current_chekpoint_green], 6
     jmp .draw
 
 .chek_point6: ; abajo
-    inc word [y_green]
+    add [y_green], cl    
     cmp word [y_green], 125
     jl .draw
     mov byte [current_chekpoint_green], 7
     jmp .draw
 
 .chek_point7: ; izquierda    
-    dec word [x_green]
+    sub [x_green], cl    
     cmp word [x_green], 150
     jg .draw
     mov byte [current_chekpoint_green], 8
     jmp .draw
 
 .chek_point8: ; abajo    
-    inc word [y_green]
-    cmp word [y_green], 160
+    add [y_green], cl
+    cmp word [y_green], 170
     jl .draw
     mov byte [current_chekpoint_green], 9
     jmp .draw
 
 .chek_point9: ; izquierda
-    dec word [x_green]
-    cmp word [x_green], 62
+    sub [x_green], cl
+    cmp word [x_green], 42
     jg .draw
     inc byte [laps]
     mov byte [current_chekpoint_green], 0
@@ -150,10 +149,10 @@ sq_y dw 0
 sq_width dw 4
 sq_height dw 4
 sq_color db 0
+laps db 0
 
 x_green dw 62    ; Posición inicial X (diferente a blue y red para no solaparse)
 y_green dw 100   ; Posición inicial Y
 current_chekpoint_green db 0  ; checkpoint inicial
-laps db 0
 
 times 512-($-$$) db 0

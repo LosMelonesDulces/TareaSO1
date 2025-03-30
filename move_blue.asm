@@ -14,6 +14,9 @@ start:
     mov byte [sq_color], 0x00
     call draw_square
 
+    mov al, [0x7DFA]
+    mov cl, al
+
     ; --- Mover según checkpoint actual ---
     cmp byte [current_chekpoint_blue], 0
     je .chek_point0
@@ -37,70 +40,70 @@ start:
     je .chek_point9
 
 .chek_point0: ; arriba
-    dec word [y_blue]
+    sub [y_blue], cl
     cmp word [y_blue], 60
     jg .draw
     mov byte [current_chekpoint_blue], 1
     jmp .draw
 
 .chek_point1: ; derecha
-    inc word [x_blue]
+    add [x_blue] , cl
     cmp word [x_blue], 125
     jl .draw
     mov byte [current_chekpoint_blue], 2
     jmp .draw
 
 .chek_point2: ; arriba
-    dec word [y_blue]
+    sub [y_blue], cl
     cmp word [y_blue], 30
     jg .draw
     mov byte [current_chekpoint_blue], 3
     jmp .draw
 
 .chek_point3: ; derecha
-    inc word [x_blue]
+    add [x_blue], cl
     cmp word [x_blue], 200
     jl .draw
     mov byte [current_chekpoint_blue], 4
     jmp .draw
 
 .chek_point4: ; abajo
-    inc word [y_blue]
+    add [y_blue], cl
     cmp word [y_blue], 100
     jl .draw
     mov byte [current_chekpoint_blue], 5
     jmp .draw
 
 .chek_point5: ; derecha
-    inc word [x_blue]
-    cmp word [x_blue], 270
+    add [x_blue], cl
+    cmp word [x_blue], 252 ;si este valor es mayor a 253 ocurre un bug
     jl .draw
     mov byte [current_chekpoint_blue], 6
     jmp .draw
 
 .chek_point6: ; abajo
-    inc word [y_blue]
+    add [y_blue], cl    
     cmp word [y_blue], 125
     jl .draw
     mov byte [current_chekpoint_blue], 7
     jmp .draw
 
 .chek_point7: ; izquierda    
-    dec word [x_blue]
-    cmp word [x_blue], 140
+    sub [x_blue], cl    
+    cmp word [x_blue], 145
     jg .draw
     mov byte [current_chekpoint_blue], 8
     jmp .draw
 
 .chek_point8: ; abajo    
-    inc word [y_blue]
+    add [y_blue], cl
     cmp word [y_blue], 170
     jl .draw
     mov byte [current_chekpoint_blue], 9
     jmp .draw
 
 .chek_point9: ; izquierda
-    dec word [x_blue]
+    sub [x_blue], cl
     cmp word [x_blue], 42
     jg .draw
     inc byte [laps]
