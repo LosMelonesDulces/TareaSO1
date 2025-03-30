@@ -175,3 +175,6 @@ cython_debug/
 
 # binaries
 *.bin
+
+# disk images
+*.img

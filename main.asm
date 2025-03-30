@@ -6,71 +6,125 @@
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0x7C00      ; Stack justo debajo del MBR
+    mov sp, 0x7C00
 
     ; --- Modo Video 13h ---
     mov ax, 0x0013
     int 0x10
 
-    ; --- Cargar square.asm en 0x7E00 (1 sector = 512 bytes) ---
+    ; --- Cargar módulos ---
+    ; Cargar move_blue en 0x7E00
     mov ax, 0x0000
-    mov es, ax          ; ES = 0x0000 (segmento)
-    mov bx, 0x7E00      ; ES:BX = 0x0000:7E00 (destino)
-    mov ah, 0x02        ; Función de lectura de disco
-    mov al, 1           ; 1 sector (512 bytes)
-    mov ch, 0           ; Cilindro 0
-    mov dh, 0           ; Cabeza 0
-    mov cl, 2           ; Sector 2 (el MBR está en el sector 1)
-    int 0x13
-    jc disk_error
-
-    ; --- Cargar mapa (124 sectores restantes) en 0x9000 ---
-    mov ax, 0x9000
-    mov es, ax          ; ES = 0x9000
-    xor bx, bx          ; ES:BX = 0x9000:0000
+    mov es, ax
+    mov bx, 0x7E00
     mov ah, 0x02
-    mov al, 124         ; 124 sectores (62 KB)
-    mov cl, 3           ; Siguientes sectores (3-126)
+    mov al, 1
+    mov ch, 0
+    mov dh, 0
+    mov cl, 2
     int 0x13
     jc disk_error
 
-    ; --- Dibujar mapa ---
+    ; Cargar move_red en 0x8000
+    mov bx, 0x8000
+    mov ah, 0x02
+    mov al, 1
+    mov cl, 3
+    int 0x13
+    jc disk_error
+
+    ; Después de cargar move_red
+    mov bx, 0x8200      ; Nueva posición para move_green
+    mov ah, 0x02
+    mov al, 1           ; 1 sector
+    mov cl, 4           ; Sector 5 (2=blue, 3=red, 4=mapa, 5=green)
+    int 0x13
+    jc disk_error
+
+    ; Cargar mapa en 0x9000
+    mov ax, 0x9000
+    mov es, ax
+    xor bx, bx
+    mov ah, 0x02
+    mov al, 125
+    mov cl, 5
+    int 0x13
+    jc disk_error
+
+    ; --- Dibujar mapa inicial ---
     call draw_map
 
-    ; --- Saltar a square.asm (0x7E00) ---
-    jmp 0x0000:0x7E00
+    ; --- Inicializar variable de turno ---
+    mov byte [turn], 0
 
-draw_map:
-    push ds
-    push es
-    mov ax, 0xA000
-    mov es, ax          ; ES = segmento de video
-    mov ax, 0x9000
-    mov ds, ax          ; DS = segmento de datos del mapa
-    xor si, si
-    xor di, di
-    mov cx, 32000       ; 320x200 = 64,000 bytes (pero movsw usa words)
-    rep movsw           ; Copiar mapa a memoria de video
-    pop es
-    pop ds
-    ret
+    ; --- Bucle principal SIN temporizador ---
+    main_loop:
+        mov al, [0x7DFE]
+        cmp al, 0
+        je .blue
+        cmp al, 1
+        je .red
+        cmp al, 2
+        je .green
 
-disk_error:
-    mov si, error_msg
-    call print_string
-    jmp $
+    .blue:
+        call 0x0000:0x7E00
+        mov byte [0x7DFE], 1
+        jmp .delay
+    .red:
+        call 0x0000:0x8000
+        mov byte [0x7DFE], 2
+        jmp .delay
+    .green:
+        call 0x0000:0x8200
+        mov byte [0x7DFE], 0
 
-print_string:
-    lodsb
-    or al, al
-    jz .done
-    mov ah, 0x0E
-    int 0x10
-    jmp print_string
-.done:
-    ret
+    .delay:
+        ; Delay usando BIOS (funciona bien en QEMU)
+        mov ah, 0x86
+        mov cx, 0x0000 ; Parte alta del delay (microsegundos)
+        ;mov dx, 0x61A8          ; Parte baja (0x0000 = ~65536 µs)
+        mov dx, 0x2710        
+        int 0x15
+        
+        jmp main_loop
 
-error_msg db "Error de disco!", 0
+    ; --- Funciones ---
+    draw_map:
+        push ds
+        push es
+        mov ax, 0xA000
+        mov es, ax
+        mov ax, 0x9000
+        mov ds, ax
+        xor si, si
+        xor di, di
+        mov cx, 32000
+        rep movsw
+        pop es
+        pop ds
+        ret
 
-times 510-($-$$) db 0
-dw 0xAA55              ; Firma del MBR
+    disk_error:
+        mov si, error_msg
+        call print_string
+        jmp $
+
+    print_string:
+        lodsb
+        or al, al
+        jz .done
+        mov ah, 0x0E
+        int 0x10
+        jmp print_string
+    .done:
+        ret
+
+    ; --- Datos ---
+    error_msg db "Error de disco!", 0
+    turn db 0  ; Variable de turno (0=azul, 1=rojo)
+    delay_amount dw 0x0000
+
+    ; --- Relleno y firma ---
+    times 510-($-$$) db 0
+    dw 0xAA55
