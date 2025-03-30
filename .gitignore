@@ -173,5 +173,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# binaries
+# Binaries
 *.bin
+*.img
+*.iso
+*.qcow2
+
