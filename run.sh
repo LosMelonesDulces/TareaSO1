@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# Generar los binarios
-python3 matriz.py
+# Generar binarios
+#nasm -f bin bootloader.asm -o boot.bin
 nasm -f bin main.asm -o main.bin
-nasm -f bin square.asm -o square.bin
+nasm -f bin move_blue.asm -o blue.bin
+nasm -f bin move_green.asm -o green.bin
+nasm -f bin move_red.asm -o red.bin
 
-# Variables
-DISK_IMAGE="disco.img"
-BOOTLOADER_BIN="main.bin"
-SQUARE_BIN="square.bin"
-MATRIZ_BIN="track_matrix_large_track.mat"
-SIZE_IN_MB=2  # Tamaño del disco en MB
+# Crear imagen de disco (2MB)
+qemu-img create -f raw disco.img 2M
 
-# Crear imagen de disco
-qemu-img create -f raw $DISK_IMAGE ${SIZE_IN_MB}M
+# Escribir en sectores (bootloader va en sector 0)
+#dd if=boot.bin of=disco.img bs=512 count=1 conv=notrunc
+dd if=main.bin of=disco.img bs=512 count=1 conv=notrunc    # Sector 1
+dd if=blue.bin of=disco.img bs=512 seek=1 conv=notrunc    # Sector 2 
+dd if=red.bin of=disco.img bs=512 seek=2 conv=notrunc     # Sector 3
+dd if=green.bin of=disco.img bs=512 seek=3 conv=notrunc   # Sector 4
 
-# Escribir los binarios en sus sectores respectivos
-dd if=$BOOTLOADER_BIN of=$DISK_IMAGE bs=512 count=1 conv=notrunc     # Sector 0 (bootloader)
-dd if=$SQUARE_BIN of=$DISK_IMAGE bs=512 seek=1 conv=notrunc          # Sector 1 (square.bin)
-dd if=$MATRIZ_BIN of=$DISK_IMAGE bs=512 seek=2 conv=notrunc          # Desde sector 2 en adelante
+# Si tienes matriz de pista:
+dd if=track_matrix_large_track.mat of=disco.img bs=512 seek=4 conv=notrunc
 
-# Iniciar QEMU con la imagen del disco creada
-qemu-system-i386 -drive format=raw,file=$DISK_IMAGE
+# Ejecutar
+qemu-system-i386 -drive format=raw,file=disco.img
