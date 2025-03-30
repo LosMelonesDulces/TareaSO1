@@ -16,6 +16,7 @@ start:
 
     mov al, [0x7DFA]
     mov cl, al
+    xor ch, ch
 
     ; --- Mover según checkpoint actual ---
     cmp byte [current_chekpoint_blue], 0
@@ -40,70 +41,70 @@ start:
     je .chek_point9
 
 .chek_point0: ; arriba
-    sub [y_blue], cl
+    sub word [y_blue], cx
     cmp word [y_blue], 60
     jg .draw
     mov byte [current_chekpoint_blue], 1
     jmp .draw
 
 .chek_point1: ; derecha
-    add [x_blue] , cl
+    add word [x_blue], cx
     cmp word [x_blue], 125
     jl .draw
     mov byte [current_chekpoint_blue], 2
     jmp .draw
 
 .chek_point2: ; arriba
-    sub [y_blue], cl
+    sub word [y_blue], cx
     cmp word [y_blue], 30
     jg .draw
     mov byte [current_chekpoint_blue], 3
     jmp .draw
 
 .chek_point3: ; derecha
-    add [x_blue], cl
+    add word [x_blue], cx
     cmp word [x_blue], 200
     jl .draw
     mov byte [current_chekpoint_blue], 4
     jmp .draw
 
 .chek_point4: ; abajo
-    add [y_blue], cl
+    add word [y_blue], cx
     cmp word [y_blue], 100
     jl .draw
     mov byte [current_chekpoint_blue], 5
     jmp .draw
 
 .chek_point5: ; derecha
-    add [x_blue], cl
-    cmp word [x_blue], 252 ;si este valor es mayor a 253 ocurre un bug
+    add word [x_blue], cx
+    cmp word [x_blue], 270
     jl .draw
     mov byte [current_chekpoint_blue], 6
     jmp .draw
 
 .chek_point6: ; abajo
-    add [y_blue], cl    
+    add word [y_blue], cx    
     cmp word [y_blue], 125
     jl .draw
     mov byte [current_chekpoint_blue], 7
     jmp .draw
 
 .chek_point7: ; izquierda    
-    sub [x_blue], cl    
+    sub word [x_blue], cx    
     cmp word [x_blue], 145
     jg .draw
     mov byte [current_chekpoint_blue], 8
     jmp .draw
 
 .chek_point8: ; abajo    
-    add [y_blue], cl
+    add word [y_blue], cx
     cmp word [y_blue], 170
     jl .draw
     mov byte [current_chekpoint_blue], 9
     jmp .draw
 
 .chek_point9: ; izquierda
-    sub [x_blue], cl
+    sub word [x_blue], cx
     cmp word [x_blue], 42
     jg .draw
     inc byte [laps]
@@ -112,27 +113,27 @@ start:
 
 .draw:
     ; --- Dibujar cuadrado en nueva posición ---
-    mov ax, [x_blue]
-    mov [sq_x], ax
-    mov ax, [y_blue]
-    mov [sq_y], ax
+    mov word ax, [x_blue]
+    mov word [sq_x], ax
+    mov word ax, [y_blue]
+    mov word [sq_y], ax
     mov byte [sq_color], 0x01 ; Color azul
     call draw_square
     ret
 
 draw_square:
-    mov di, [sq_y]      ; Y position
+    mov word di, [sq_y]      ; Y position
     imul di, 320        ; Y * 320 (filas)
-    add di, [sq_x]      ; + X position
-    mov al, [sq_color]
-    mov cx, [sq_height] ; Altura del cuadrado
+    add word di, [sq_x]      ; + X position
+    mov byte al, [sq_color]
+    mov word cx, [sq_height] ; Altura del cuadrado
 
 .row_loop:
     push cx
-    mov cx, [sq_width]  ; Ancho del cuadrado
+    mov word cx, [sq_width]  ; Ancho del cuadrado
     rep stosb           ; Dibujar fila
-    add di, 320         ; Siguiente fila
-    sub di, [sq_width]
+    add word di, 320         ; Siguiente fila
+    sub word di, [sq_width]
     pop cx
     loop .row_loop
     ret

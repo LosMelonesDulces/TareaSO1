@@ -68,99 +68,99 @@ assign_speed:
     call get_random
     mov [0x7DFC], al
 
-    ; --- Bucle principal SIN temporizador ---
-    main_loop:
-        mov al, [0x7DFE]
-        cmp al, 0
-        je .blue
-        cmp al, 1
-        je .red
-        cmp al, 2
-        je .green
+; --- Bucle principal SIN temporizador ---
+main_loop:
+    ; mov al, [0x7DFE]
+    ; cmp al, 0
+    ; je .blue
+    ; cmp al, 1
+    ; je .red
+    ; cmp al, 2
+    ; je .green
 
-    .blue:
-        call 0x0000:0x7E00
-        mov byte [0x7DFE], 1
-        jmp .delay
-    .red:
-        call 0x0000:0x8000
-        mov byte [0x7DFE], 2
-        jmp .delay
-    .green:
-        call 0x0000:0x8200
-        mov byte [0x7DFE], 0
+.blue:
+    call 0x0000:0x7E00
+    mov byte [0x7DFE], 1
+    ; jmp .delay
+.red:
+    call 0x0000:0x8000
+    mov byte [0x7DFE], 2
+    ; jmp .delay
+.green:
+    call 0x0000:0x8200
+    mov byte [0x7DFE], 0
 
-    .delay:
-        ; Delay usando BIOS (funciona bien en QEMU)
-        mov ah, 0x86
-        mov cx, 0x0000 ; Parte alta del delay (microsegundos)
-        mov dx, 0x61A8          ; Parte baja (0x0000 = ~65536 µs)
-        ;mov dx, 0x2710         ; Parte baja (0x0000 = ~65536 µs)
-        int 0x15
-        
-        jmp main_loop
-
-    ; --- Funciones ---
-    draw_map:
-        push ds
-        push es
-        mov ax, 0xA000
-        mov es, ax
-        mov ax, 0x9000
-        mov ds, ax
-        xor si, si
-        xor di, di
-        mov cx, 32000
-        rep movsw
-        pop es
-        pop ds
-        ret
-
-    disk_error:
-        mov si, error_msg
-        call print_string
-        jmp $
-
-    print_string:
-        lodsb
-        or al, al
-        jz .done
-        mov ah, 0x0E
-        int 0x10
-        jmp print_string
-    .done:
-        ret
-
-    generate_random:
-        ; Usar el contador de ticks como semilla
-        mov ah, 0x00
-        int 0x1A        ; DX = ticks desde medianoche
-        
-        ; Algoritmo simple para mejorar aleatoriedad
-        mov ax, dx
-        mov bx, 0x8405
-        mul bx          ; AX = AX * BX
-        add ax, 0x1234  ; Sumar constante
-        xor ax, [n_tropy]
-        inc byte [n_tropy]
-        xor dx, dx
-        ret
+.delay:
+    ; Delay usando BIOS (funciona bien en QEMU)
+    mov ah, 0x86
+    mov cx, 0x0000 ; Parte alta del delay (microsegundos)
+    mov dx, 0xAAAA          ; Parte baja (0x0000 = ~65536 µs)
+    ;mov dx, 0x2710         ; Parte baja (0x0000 = ~65536 µs)
+    int 0x15
     
-    get_random:
-        call generate_random
-        mov bx, 5
-        div bx
-        mov al, dl
-        inc al
-        ret
+    jmp main_loop
 
-    n_tropy db 0
+; --- Funciones ---
+draw_map:
+    push ds
+    push es
+    mov ax, 0xA000
+    mov es, ax
+    mov ax, 0x9000
+    mov ds, ax
+    xor si, si
+    xor di, di
+    mov cx, 32000
+    rep movsw
+    pop es
+    pop ds
+    ret
 
-    ; --- Datos ---
-    error_msg db "Error de disco!", 0
-    turn db 0  ; Variable de turno (0=azul, 1=rojo)
-    delay_amount dw 0x0000
+disk_error:
+    mov si, error_msg
+    call print_string
+    jmp $
 
-    ; --- Relleno y firma ---
-    times 510-($-$$) db 0
-    dw 0xAA55
+print_string:
+    lodsb
+    or al, al
+    jz .done
+    mov ah, 0x0E
+    int 0x10
+    jmp print_string
+.done:
+    ret
+
+generate_random:
+    ; Usar el contador de ticks como semilla
+    mov ah, 0x00
+    int 0x1A        ; DX = ticks desde medianoche
+    
+    ; Algoritmo simple para mejorar aleatoriedad
+    mov ax, dx
+    mov bx, 0x8405
+    mul bx          ; AX = AX * BX
+    add ax, 0x1234  ; Sumar constante
+    xor ax, [n_tropy]
+    inc byte [n_tropy]
+    xor dx, dx
+    ret
+
+get_random:
+    call generate_random
+    mov bx, 5
+    div bx
+    mov al, dl
+    inc al
+    ret
+
+n_tropy db 0
+
+; --- Datos ---
+error_msg db "Error de disco!", 0
+turn db 0  ; Variable de turno (0=azul, 1=rojo)
+delay_amount dw 0x0000
+
+; --- Relleno y firma ---
+times 510-($-$$) db 0
+dw 0xAA55
