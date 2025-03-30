@@ -40,79 +40,71 @@ start:
     je .chek_point9
 
 .chek_point0: ; arriba
-    sub [y_red], cl
-    cmp word [y_red], 65
+    sub word [y_red], cx
+    cmp word [y_red], 60
     jg .draw
     mov byte [current_chekpoint_red], 1
     jmp .draw
 
 .chek_point1: ; derecha
-    add [x_red], cl
-    cmp word [x_red], 110
+    add word [x_red], cx
+    cmp word [x_red], 125
     jl .draw
     mov byte [current_chekpoint_red], 2
     jmp .draw
 
 .chek_point2: ; arriba
-    ;dec word [y_red]
-    sub [y_red], cl
-    cmp word [y_red], 20
+    sub word [y_red], cx
+    cmp word [y_red], 30
     jg .draw
     mov byte [current_chekpoint_red], 3
     jmp .draw
 
 .chek_point3: ; derecha
-    ;inc word [x_red]
-    add [x_red], cl
-    cmp word [x_red], 190
+    add word [x_red], cx
+    cmp word [x_red], 200
     jl .draw
     mov byte [current_chekpoint_red], 4
     jmp .draw
 
 .chek_point4: ; abajo
-    add [y_red], cl
-    ;inc word [y_red]
-    cmp word [y_red], 95
+    add word [y_red], cx
+    cmp word [y_red], 100
     jl .draw
     mov byte [current_chekpoint_red], 5
     jmp .draw
 
 .chek_point5: ; derecha
-    ;inc word [x_red]
-    add [x_red], cl
-    cmp word [x_red], 252
+    add word [x_red], cx
+    cmp word [x_red], 270
     jl .draw
     mov byte [current_chekpoint_red], 6
     jmp .draw
 
 .chek_point6: ; abajo
-    add [y_red], cl
-    ;inc word [y_red]
-    cmp word [y_red], 130
+    add word [y_red], cx    
+    cmp word [y_red], 125
     jl .draw
     mov byte [current_chekpoint_red], 7
     jmp .draw
 
 .chek_point7: ; izquierda    
-    ;dec word [x_red]
-    sub [x_red], cl
-    cmp word [x_red], 160
+    sub word [x_red], cx    
+    cmp word [x_red], 145
     jg .draw
     mov byte [current_chekpoint_red], 8
     jmp .draw
 
 .chek_point8: ; abajo    
-    ;inc word [y_red]
-    add [y_red], cl 
-    cmp word [y_red], 165
+    add word [y_red], cx
+    cmp word [y_red], 170
     jl .draw
     mov byte [current_chekpoint_red], 9
     jmp .draw
 
 .chek_point9: ; izquierda
-    ;dec word [x_red]
-    sub [x_red], cl
-    cmp word [x_red], 52
+    sub word [x_red], cx
+    cmp word [x_red], 42
     jg .draw
     inc byte [laps]
     mov byte [current_chekpoint_red], 0

@@ -41,70 +41,70 @@ start:
     je .chek_point9
 
 .chek_point0: ; arriba
-    sub [y_green], cl
+    sub word [y_green], cx
     cmp word [y_green], 60
     jg .draw
     mov byte [current_chekpoint_green], 1
     jmp .draw
 
 .chek_point1: ; derecha
-    add [x_green], cl
+    add word [x_green], cx
     cmp word [x_green], 125
     jl .draw
     mov byte [current_chekpoint_green], 2
     jmp .draw
 
 .chek_point2: ; arriba
-    sub [y_green], cl
+    sub word [y_green], cx
     cmp word [y_green], 30
     jg .draw
     mov byte [current_chekpoint_green], 3
     jmp .draw
 
 .chek_point3: ; derecha
-    add [x_green], cl
+    add word [x_green], cx
     cmp word [x_green], 200
     jl .draw
     mov byte [current_chekpoint_green], 4
     jmp .draw
 
 .chek_point4: ; abajo
-    add [y_green], cl
+    add word [y_green], cx
     cmp word [y_green], 100
     jl .draw
     mov byte [current_chekpoint_green], 5
     jmp .draw
 
 .chek_point5: ; derecha
-    add [x_green], cl
-    cmp word [x_green], 252 ; si este valor es mayor a 253 ocurre un bug
+    add word [x_green], cx
+    cmp word [x_green], 270
     jl .draw
     mov byte [current_chekpoint_green], 6
     jmp .draw
 
 .chek_point6: ; abajo
-    add [y_green], cl    
+    add word [y_green], cx    
     cmp word [y_green], 125
     jl .draw
     mov byte [current_chekpoint_green], 7
     jmp .draw
 
 .chek_point7: ; izquierda    
-    sub [x_green], cl    
-    cmp word [x_green], 150
+    sub word [x_green], cx    
+    cmp word [x_green], 145
     jg .draw
     mov byte [current_chekpoint_green], 8
     jmp .draw
 
 .chek_point8: ; abajo    
-    add [y_green], cl
+    add word [y_green], cx
     cmp word [y_green], 170
     jl .draw
     mov byte [current_chekpoint_green], 9
     jmp .draw
 
 .chek_point9: ; izquierda
-    sub [x_green], cl
+    sub word [x_green], cx
     cmp word [x_green], 42
     jg .draw
     inc byte [laps]
