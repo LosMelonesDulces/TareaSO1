@@ -25,60 +25,37 @@ start:
     mov word [player_dir], 1
     je .move
     mov word [player_dir], 0
-    jmp .end            ; Ignorar otras teclas
-; start:
-;     ; Leer el puerto del teclado
-;     in al, 0x60          ; Leer el scan code del puerto 0x60
-;     test al, 0x80        ; Comprobar si el bit 7 (MSB) está establecido
-;     jz .key_pressed      ; Si el bit 7 no está establecido, es un make code
-;     jmp .key_released    ; Si el bit 7 está establecido, es un break code
-
-; .key_pressed:
-;     ; Aquí manejas la tecla presionada
-;     cmp al, 0x48         ; Flecha arriba (make code)
-;     je .move_up
-;     cmp al, 0x50         ; Flecha abajo (make code)
-;     je .move_down
-;     cmp al, 0x4B         ; Flecha izquierda (make code)
-;     je .move_left
-;     cmp al, 0x4D         ; Flecha derecha (make code)
-;     je .move_right
-;     jmp .end
-
-
-; .key_released:
-;     ; Aquí manejas la tecla liberada
-;     ; cmp al, 0xC8         ; Flecha arriba (break code = 0x48 + 0x80)
-;     ; je .release_up
-;     ; cmp al, 0xD0         ; Flecha abajo (break code = 0x50 + 0x80)
-;     ; je .release_down
-;     jmp .end
+    jmp end_script            ; Ignorar otras teclas
 
 
 .move_up:
-    call .erase
+    call erase
     sub word [player_y], 5   ; Mover hacia arriba
-    jmp .redraw
+    call check_collision
+    jmp redraw
 
 .move_down:
-    call .erase
+    call erase
     add word [player_y], 5   ; Mover hacia abajo
-    jmp .redraw
+    call check_collision
+    jmp redraw
 
 .move_left:
-    call .erase
+    call erase
     sub word [player_x], 5   ; Mover hacia la izquierda
-    jmp .redraw
+    call check_collision
+    jmp redraw
 
 .move_right:
-    call .erase
+    call erase
     add word [player_x], 5   ; Mover hacia la derecha
-    jmp .redraw
+    call check_collision
+    jmp redraw
 
 .move:
     ; Mover jugador en la dirección actual
     cmp word [player_dir], 0
-    je .redraw
+    je redraw
     cmp word [player_dir], 1
     je .move_right
     cmp word [player_dir], 2
@@ -89,8 +66,11 @@ start:
     je .move_down
     jmp .no_key
 
+.no_key:
+    ; No hacer nada si no hay tecla
+    jmp end_script
 
-.erase:
+erase:
     ; Borrar jugador en la posición anterior
     mov ax, [player_x]
     mov word [sq_x], ax
@@ -100,7 +80,7 @@ start:
     call draw_square
     ret
 
-.redraw:
+redraw:
     ; Dibujar jugador en la nueva posición
     mov ax, [player_x]
     mov word [sq_x], ax
@@ -108,13 +88,10 @@ start:
     mov word [sq_y], ax
     mov byte [sq_color], 0x09 ; Rojo (jugador)
     call draw_square
-    jmp .end
+    jmp end_script
 
-.no_key:
-    ; No hacer nada si no hay tecla
-    jmp .end
 
-.end:
+end_script:
     ret
 
 ; --- Variables locales ---
@@ -143,4 +120,29 @@ draw_square:
     sub di, [sq_width]
     pop cx
     loop .row_loop
+    ret
+
+check_collision:
+    ; Calculate the video memory address for the next position
+    mov ax, [player_y]       ; Get Y position
+    imul ax, 320             ; Y * 320 (screen width)
+    add ax, [player_x]       ; Add X position
+    mov di, ax               ; Store the offset in DI
+
+    ; Set ES to video memory segment
+    mov ax, 0xA000
+    mov es, ax
+
+    ; Read the pixel color at ES:[DI]
+    mov al, byte [es:di]
+    cmp al, 0x0F             ; Check if the color is White (0x0F)
+    jne .no_collision         ; If not white, continue
+
+    ; Reset player position to initial values
+    mov word [player_x], 42  ; Initial X position
+    mov word [player_y], 100 ; Initial Y position
+    mov word [player_dir], 0 ; Stop the player
+    ; jmp redraw              ; Redraw the player at the initial position
+
+.no_collision:
     ret
