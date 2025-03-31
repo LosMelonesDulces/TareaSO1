@@ -33,11 +33,19 @@
     int 0x13
     jc disk_error
 
-    ; Después de cargar move_red
+    ; Cargar move_green en 0x8200
     mov bx, 0x8200      ; Nueva posición para move_green
     mov ah, 0x02
     mov al, 1           ; 1 sector
-    mov cl, 4           ; Sector 5 (2=blue, 3=red, 4=mapa, 5=green)
+    mov cl, 4           ; Sector (2=blue, 3=red, 4=green)
+    int 0x13
+    jc disk_error
+
+    ; Cargar player1 en 0x8400
+    mov bx, 0x8400
+    mov ah, 0x02
+    mov al, 1
+    mov cl, 5
     int 0x13
     jc disk_error
 
@@ -47,7 +55,7 @@
     xor bx, bx
     mov ah, 0x02
     mov al, 125
-    mov cl, 5
+    mov cl, 6
     int 0x13
     jc disk_error
 
@@ -88,6 +96,10 @@ main_loop:
     ; jmp .delay
 .green:
     call 0x0000:0x8200
+    mov byte [0x7DFE], 0
+
+.player1:
+    call 0x0000:0x8400
     mov byte [0x7DFE], 0
 
 .delay:

@@ -178,3 +178,4 @@ cython_debug/
 
 # disk images
 *.img
+*.qcow2
