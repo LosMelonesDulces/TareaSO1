@@ -41,11 +41,19 @@
     int 0x13
     jc disk_error
 
-    ; Cargar player1 en 0x8400
+    ; Cargar player en 0x8400
     mov bx, 0x8400
     mov ah, 0x02
     mov al, 1
     mov cl, 5
+    int 0x13
+    jc disk_error
+
+    ; Cargar player2 en 0x8600
+    mov bx, 0x8600
+    mov ah, 0x02
+    mov al, 1
+    mov cl, 6
     int 0x13
     jc disk_error
 
@@ -55,7 +63,7 @@
     xor bx, bx
     mov ah, 0x02
     mov al, 125
-    mov cl, 6
+    mov cl, 7
     int 0x13
     jc disk_error
 
@@ -85,22 +93,26 @@ main_loop:
     ; je .red
     ; cmp al, 2
     ; je .green
+.player2:
+    call 0x0000:0x8600
+
+; .player1:
+;     call 0x0000:0x8400
 
 .blue:
     call 0x0000:0x7E00
-    mov byte [0x7DFE], 1
+    ; mov byte [0x7DFE], 1
     ; jmp .delay
 .red:
     call 0x0000:0x8000
-    mov byte [0x7DFE], 2
+    ; mov byte [0x7DFE], 2
     ; jmp .delay
 .green:
     call 0x0000:0x8200
-    mov byte [0x7DFE], 0
+    ; mov byte [0x7DFE], 0
+    ; mov byte [0x7DFE], 0
 
-.player1:
-    call 0x0000:0x8400
-    mov byte [0x7DFE], 0
+    ; mov byte [0x7DFE], 0
 
 .delay:
     ; Delay usando BIOS (funciona bien en QEMU)
