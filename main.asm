@@ -118,7 +118,7 @@ main_loop:
     ; Delay usando BIOS (funciona bien en QEMU)
     mov ah, 0x86
     mov cx, 0x0000 ; Parte alta del delay (microsegundos)
-    mov dx, 0xAAAA          ; Parte baja (0x0000 = ~65536 µs)
+    mov dx, 0xC350          ; Parte baja (0x0000 = ~65536 µs)
     ;mov dx, 0x2710         ; Parte baja (0x0000 = ~65536 µs)
     int 0x15
     
