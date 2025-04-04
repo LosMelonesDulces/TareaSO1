@@ -121,6 +121,9 @@ main_loop:
     mov dx, 0xC350          ; Parte baja (0x0000 = ~65536 µs)
     ;mov dx, 0x2710         ; Parte baja (0x0000 = ~65536 µs)
     int 0x15
+    sub word [end_timer], 0x0001
+    cmp word [end_timer], 0
+    jl end_script
     
     jmp main_loop
 
@@ -178,12 +181,21 @@ get_random:
     inc al
     ret
 
+end_script:
+    ; --- Fin del programa ---
+    mov eax, 1        ; Número de syscall para exit
+    mov ebx, 0        ; Código de salida (0 = éxito)
+    int 0x80          ; Llamada al kernel    mov ebx, 0        ; Código de salida (0 = éxito)
+    int 0x80          ; Llamada al kernel
+
 n_tropy db 0
 
 ; --- Datos ---
 error_msg db "Error de disco!", 0
 turn db 0  ; Variable de turno (0=azul, 1=rojo)
 delay_amount dw 0x0000
+end_timer dw 0x04B0
+
 
 ; --- Relleno y firma ---
 times 510-($-$$) db 0
