@@ -49,7 +49,7 @@
     int 0x13
     jc disk_error
 
-    ; Cargar player2 en 0x8600
+    ; Cargar lap_controller en 0x8600
     mov bx, 0x8600
     mov ah, 0x02
     mov al, 1
@@ -66,6 +66,12 @@
     mov cl, 7
     int 0x13
     jc disk_error
+
+    ; Posiciones iniciales
+    mov word [0xA000], 90
+    mov word [0xA010], 150
+    mov word [0xA020], 34
+    mov word [0xA030], 100
 
     ; --- Dibujar mapa inicial ---
     call draw_map
@@ -86,35 +92,19 @@ assign_speed:
 
 ; --- Bucle principal SIN temporizador ---
 main_loop:
-    ; mov al, [0x7DFE]
-    ; cmp al, 0
-    ; je .blue
-    ; cmp al, 1
-    ; je .red
-    ; cmp al, 2
-    ; je .green
-.player2:
+
+; .player2:
+    call 0x0000:0x8400
+; .blue:
+    call 0x0000:0x7E00
+; .red:
+    call 0x0000:0x8000
+; .green:
+    call 0x0000:0x8200
+; .lap_controller:
     call 0x0000:0x8600
 
-; .player1:
-;     call 0x0000:0x8400
-
-.blue:
-    call 0x0000:0x7E00
-    ; mov byte [0x7DFE], 1
-    ; jmp .delay
-.red:
-    call 0x0000:0x8000
-    ; mov byte [0x7DFE], 2
-    ; jmp .delay
-.green:
-    call 0x0000:0x8200
-    ; mov byte [0x7DFE], 0
-    ; mov byte [0x7DFE], 0
-
-    ; mov byte [0x7DFE], 0
-
-.delay:
+; .delay:
     ; Delay usando BIOS (funciona bien en QEMU)
     mov ah, 0x86
     mov cx, 0x0000 ; Parte alta del delay (microsegundos)
@@ -183,10 +173,26 @@ get_random:
 
 end_script:
     ; --- Fin del programa ---
+    
+
+
+    call draw_screen
     mov eax, 1        ; Número de syscall para exit
     mov ebx, 0        ; Código de salida (0 = éxito)
     int 0x80          ; Llamada al kernel    mov ebx, 0        ; Código de salida (0 = éxito)
     int 0x80          ; Llamada al kernel
+
+draw_screen:
+    mov di, 0
+    mov al, [sq_color]
+
+.row_loop:
+    push cx
+    mov cx, 64000  ; Ancho del cuadrado
+    rep stosb
+    pop cx
+    loop .row_loop
+    ret
 
 n_tropy db 0
 
@@ -195,6 +201,13 @@ error_msg db "Error de disco!", 0
 turn db 0  ; Variable de turno (0=azul, 1=rojo)
 delay_amount dw 0x0000
 end_timer dw 0x04B0
+
+blue_laps equ 0xA040    ; Laps del bot azul
+green_laps equ 0xA050  ; Laps del bot verde
+red_laps equ 0xA060    ; Laps del bot rojo
+player1_laps equ 0xA070 ; Laps del jugador 1
+player2_laps equ 0xA080 ; Laps del jugador 2
+sq_color equ 0xA090
 
 
 ; --- Relleno y firma ---

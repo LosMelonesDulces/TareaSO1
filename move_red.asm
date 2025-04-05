@@ -44,6 +44,7 @@ start:
     cmp word [y_red], 60
     jg .draw
     mov byte [current_chekpoint_red], 1
+    add word [lap_count], 1
     jmp .draw
 
 .chek_point1: ; derecha
@@ -153,5 +154,7 @@ laps db 0
 x_red dw 52    ; Posición inicial X (diferente a blue para no solaparse)
 y_red dw 100   ; Posición inicial Y
 current_chekpoint_red db 0  ; checkpoint inicial
+lap_count equ 0xA060
+
 
 times 512-($-$$) db 0

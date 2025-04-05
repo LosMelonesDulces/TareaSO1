@@ -1,4 +1,4 @@
-[org 0x8600]
+[org 0x8400]
 [bits 16]
 
 start:
@@ -161,7 +161,7 @@ load_player1:
     mov word [sq_x], ax
     mov ax, [player1_y]
     mov word [sq_y], ax
-    mov byte [sq_color], 0x09 ; Rojo (jugador)
+    mov byte [sq_color], 0x09
     ret
 
 load_player2:
@@ -176,10 +176,10 @@ end_script:
     ret
 
 ; --- Variables locales ---
-player1_x dw 42     ; Posición inicial X del jugador
-player1_y dw 100    ; Posición inicial Y del jugador
-player2_x dw 52     ; Posición inicial X del jugador
-player2_y dw 100    ; Posición inicial Y del jugador
+player1_x equ 0xA000 ; Posición X del jugador 1
+player1_y equ 0xA010    ; Posición Y del jugador 1
+player2_x equ 0xA020     ; Posición X del jugador 2
+player2_y equ 0xA030    ; Posición Y del jugador 2
 sq_x dw 0          ; Coordenada X del cuadrado
 sq_y dw 0          ; Coordenada Y del cuadrado
 sq_color db 0      ; Color del cuadrado
@@ -218,7 +218,7 @@ check_collision1:
     jne no_collision         ; If not white, continue
 
     ; Reset player position to initial values
-    mov word [player1_x], 42  ; Initial X position
+    mov word [player1_x], 52  ; Initial X position
     mov word [player1_y], 100 ; Initial Y position
     mov byte [player1_dir], 0 ; Stop the player
 
@@ -237,7 +237,7 @@ check_collision2:
     jne no_collision         ; If not white, continue
 
     ; Reset player position to initial values
-    mov word [player2_x], 52  ; Initial X position
+    mov word [player2_x], 42  ; Initial X position
     mov word [player2_y], 100 ; Initial Y position
     mov byte [player2_dir], 0 ; Stop the player
     ; jmp redraw              ; Redraw the player at the initial position
